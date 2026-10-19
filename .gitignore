@@ -1,0 +1,13 @@
+# Local build outputs, dependency downloads and test artifacts
+/.cache/
+/dist/
+*.exe
+*.dll
+*.pdb
+*.log
+*.dmp
+*.zip
+/.vs/
+/.idea/
+Thumbs.db
+Desktop.ini
