@@ -7,7 +7,7 @@ using System.Reflection;
 
 [assembly: AssemblyTitle("PDF Stage · 无边框演示")]
 [assembly: AssemblyProduct("PDF Stage")]
-[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
 
 namespace PdfStage
 {
@@ -15,9 +15,13 @@ namespace PdfStage
     {
         [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr value);
         [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        static extern int SetCurrentProcessExplicitAppUserModelID(string appId);
         [STAThread]
         static void Main(string[] args)
         {
+            // Give Explorer the same identity on startup, after a file change and after a portable update.
+            SetCurrentProcessExplicitAppUserModelID("Xavier.PdfStage.Desktop");
             try { if (!SetProcessDpiAwarenessContext(new IntPtr(-4))) SetProcessDPIAware(); }
             catch (EntryPointNotFoundException) { SetProcessDPIAware(); }
             Application.EnableVisualStyles();

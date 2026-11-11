@@ -61,7 +61,7 @@ PDF Stage 是一个轻量的 Windows 桌面工具：打开 PDF 后，窗口只�
 | 自由移动与缩放 | 按住页面拖动窗口，拖四边或四角调整尺寸 |
 | 等比完整显示 | 保持页面比例，不裁切；比例不一致时留黑边 |
 | 一键匹配比例 | `Ctrl + 1` 调整窗口以贴合当前页面比例 |
-| 多种翻页方式 | 单击、滚轮、方向键、空格、Page Up / Down、鼠标侧键 |
+| 多种翻页方式 | 点左半边后退、右半边前进，或用滚轮、方向键、空格、Page Up / Down、鼠标侧键 |
 | 跨窗口翻页 | 可选启用 `Ctrl + Alt + ← / →`，焦点在讲稿窗口也能翻页 |
 | 快速布局 | 右键将窗口放在屏幕左侧或右侧，可切换置顶 |
 | 黑屏暂停 | `B` 暂时隐藏页面，再按一次恢复 |
@@ -69,12 +69,16 @@ PDF Stage 是一个轻量的 Windows 桌面工具：打开 PDF 后，窗口只�
 | 保留窗口位置 | 记住窗口大小及位置，恢复时限制在可见工作区 |
 | 错误处理 | 无效文件打开失败时保留原文档，异常会写入本地日志 |
 
+左右点击区跟随窗口宽度，中线归右侧；拖动不翻页。首页继续向前、末页继续向后时，保持原页且无提示。
+
+启动后可从 Windows 任务栏查看 PDF Stage。在菜单中最小化会保留运行按钮，点击任务栏按钮可恢复；退出后运行标记消失。手动固定的图标会保留。
+
 普通翻页键在 PDF Stage 获得焦点时生效；全局翻页需要手动启用。最后一页不会自动循环到第一页。
 
 ## 下载与运行
 
 1. 打开 [Releases](https://github.com/xavier-xiao7/pdf-stage/releases/latest)。
-2. 下载 `PdfStage-1.0.1-Windows-x64.zip`，**解压整个压缩包**。
+2. 下载 `PdfStage-1.1.0-Windows-x64.zip`，**解压整个压缩包**。
 3. 双击解压后的 `PdfStage.exe`。
 4. 点击“打开 PDF”、按 `Ctrl + O`，或将 PDF 拖进窗口。
 5. 用附带的 `Demo.pdf` 可先试用三页示例。
@@ -95,8 +99,8 @@ Node.js 仅在开发者生成测试 PDF 时使用，普通用户运行软件不�
 
 | 操作 | 快捷方式 |
 | --- | --- |
-| 下一页 | 单击、滚轮向下、`→`、`↓`、`Space`、`Page Down` |
-| 上一页 | `Shift + 单击`、滚轮向上、`←`、`↑`、`Page Up`、`Backspace`、`Shift + Space` |
+| 下一页 | 点窗口右半边、滚轮向下、`→`、`↓`、`Space`、`Page Down` |
+| 上一页 | 点窗口左半边、`Shift + 单击`、滚轮向上、`←`、`↑`、`Page Up`、`Backspace`、`Shift + Space` |
 | 第一页 / 最后一页 | `Home` / `End` |
 | 打开 PDF | `Ctrl + O` |
 | 跳转页码 | `Ctrl + G` |
@@ -176,7 +180,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package.ps1
 ```
 
-会生成 `dist/PdfStage-1.0.1-Windows-x64.zip` 和同名 `.sha256` 校验文件。
+会生成 `dist/PdfStage-1.1.0-Windows-x64.zip` 和同名 `.sha256` 校验文件。
 
 ### 运行测试
 
@@ -188,7 +192,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test.ps1
 
 测试包括 PDF 渲染、边界翻页、拖放、原生缩放、全局快捷键和菜单生命周期回归。结果保存在 `.cache/tests/`。
 
-已执行的 1.0.1 验证包括 **48 项核心检查 + 18 项菜单回归检查**，其中包含 **150 轮开关菜单、移动、缩放和翻页的组合操作**。这说明这些具体路径已验证，不代表所有 PDF 和运行环境都经过测试。详见 [验证说明](docs/validation.md)。
+1.1.0 在 Windows 11 上已实测任务栏的启动、最小化、点击恢复和退出。自动化验证包括 **56 项核心检查 + 18 项菜单回归检查**，其中包含 **150 轮开关菜单、移动、缩放和翻页的组合操作**。这说明这些具体路径已验证，不代表所有 PDF 和运行环境都经过测试。详见 [验证说明](docs/validation.md)。
 
 ## 实现与目录
 

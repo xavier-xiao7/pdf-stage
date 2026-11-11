@@ -31,6 +31,7 @@ namespace PdfStage
         {
             initialPath = path;
             Text = "PDF Stage · 无边框演示";
+            ShowInTaskbar = true;
             FormBorderStyle = FormBorderStyle.None;
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.FromArgb(16, 20, 29);
@@ -66,6 +67,8 @@ namespace PdfStage
             {
                 CreateParams cp = base.CreateParams;
                 cp.Style |= 0x00040000; // WS_THICKFRAME enables the native resize loop.
+                cp.Style |= 0x00020000; // WS_MINIMIZEBOX: taskbar minimize/restore.
+                cp.ExStyle = (cp.ExStyle | 0x00040000) & ~0x80; // APPWINDOW, never TOOLWINDOW.
                 return cp;
             }
         }
@@ -244,9 +247,13 @@ namespace PdfStage
             if (e.Button != MouseButtons.Left || !pressed) return;
             bool clicked = !dragging;
             pressed = false; Capture = false;
-            if (!clicked) return;
+            if (!clicked || !ClientRectangle.Contains(e.Location)) return;
             if (frame == null) { if (openButton.Contains(e.Location) && !loading) ChooseFile(); }
-            else Navigate(page + ((ModifierKeys & Keys.Shift) != 0 ? -1 : 1));
+            else
+            {
+                bool previous = e.X < ClientSize.Width / 2 || (ModifierKeys & Keys.Shift) != 0;
+                Navigate(page + (previous ? -1 : 1));
+            }
         }
         protected override void OnMouseCaptureChanged(EventArgs e) { base.OnMouseCaptureChanged(e); if (!Capture) pressed = false; }
         protected override void OnMouseWheel(MouseEventArgs e)
@@ -369,7 +376,7 @@ namespace PdfStage
         {
             MessageBox.Show(this,
                 "1. 打开或拖入 PDF。\n2. 拖动页面移动窗口，拖动边缘调整大小。\n3. Zoom 共享屏幕时，选择「PDF Stage」窗口。\n\n" +
-                "单击 / 滚轮向下 / → / 空格：下一页\nShift + 单击 / 滚轮向上 / ←：上一页\nHome / End：第一页 / 最后一页\nCtrl + G：跳转页码\nCtrl + 1：窗口贴合页面比例\nCtrl + T：切换窗口置顶\nB：黑屏 / 恢复\n右键 / Esc：菜单；Alt + F4：退出\n\n" +
+                "点左半边：上一页；点右半边：下一页\n到首页或末页再向外翻：停在原页，不提示\n滚轮向下 / → / 空格：下一页；滚轮向上 / ←：上一页\nHome / End：第一页 / 最后一页\nCtrl + G：跳转页码\nCtrl + 1：窗口贴合页面比例\nCtrl + T：切换窗口置顶\nB：黑屏 / 恢复\n右键 / Esc：菜单；Alt + F4：退出\n\n" +
                 "看讲稿时也能翻页：先按 Ctrl + H 启用，再使用\nCtrl + Alt + ← / →，即使焦点在讲稿窗口也有效。\n\n" +
                 "页面始终保持比例、完整显示。比例不一致时保留黑边。\n菜单和对话框可能被共享；建议共享前完成文件选择。\n共享期间请勿最小化演示窗口。", "PDF Stage · 使用说明", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

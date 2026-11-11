@@ -39,6 +39,12 @@ namespace PdfStage
         }
         static void Pump(int ms) { DateTime end = DateTime.UtcNow.AddMilliseconds(ms); while (DateTime.UtcNow < end) { Application.DoEvents(); Thread.Sleep(5); } }
         static void Key(StageForm f, Keys key) { PostMessage(f.Handle, 0x100, new IntPtr((int)key), IntPtr.Zero); Pump(40); PostMessage(f.Handle, 0x101, new IntPtr((int)key), IntPtr.Zero); }
+        static void ClickPage(StageForm f, int x, int y)
+        {
+            IntPtr point = new IntPtr((y << 16) | x);
+            SendMessage(f.Handle, 0x201, new IntPtr(1), point);
+            SendMessage(f.Handle, 0x202, IntPtr.Zero, point);
+        }
         static void Command(StageForm f, Keys key) { Message m = new Message(); typeof(StageForm).GetMethod("ProcessCmdKey", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(f, new object[] { m, key }); Pump(30); }
         static void ReadyPage(StageForm f, int p) { Until(delegate { return (int)Field(f, "renderedPage") == p; }, "rendered page " + (p + 1)); }
         static void Capture(StageForm f, string file)
@@ -111,8 +117,15 @@ namespace PdfStage
                     Key(form, Keys.Right); Pump(100); Check((int)Field(form, "page") == 2, "last page does not wrap");
                     Key(form, Keys.Home); ReadyPage(form, 0);
                     Key(form, Keys.Left); Check((int)Field(form, "page") == 0, "first page does not wrap");
-                    SendMessage(form.Handle, 0x201, new IntPtr(1), new IntPtr((200 << 16) | 200));
-                    SendMessage(form.Handle, 0x202, IntPtr.Zero, new IntPtr((200 << 16) | 200)); ReadyPage(form, 1);
+                    for (int n = 0; n < 4; ++n) ClickPage(form, 100, 300);
+                    Check((int)Field(form, "page") == 0, "repeated left-half clicks at start stay on first page");
+                    ClickPage(form, 480, 50); ReadyPage(form, 1);
+                    ClickPage(form, 479, 400); ReadyPage(form, 0);
+                    ClickPage(form, 800, 350); ReadyPage(form, 1);
+                    ClickPage(form, 800, 100); ReadyPage(form, 2);
+                    for (int n = 0; n < 4; ++n) ClickPage(form, 900, 300);
+                    Check((int)Field(form, "page") == 2, "repeated right-half clicks at end stay on last page");
+                    ClickPage(form, 100, 100); ReadyPage(form, 1);
                     Call(form, "OnMouseWheel", new MouseEventArgs(MouseButtons.None, 0, 100, 100, -120)); ReadyPage(form, 2);
                     Call(form, "OnMouseWheel", new MouseEventArgs(MouseButtons.None, 0, 100, 100, 120));
                     Check((int)Field(form, "page") == 2, "wheel burst debounce prevents accidental multiple turns");
@@ -121,6 +134,8 @@ namespace PdfStage
                     form.Size = new Size(1100, 700); Pump(400);
                     Until(delegate { Bitmap b = (Bitmap)Field(form, "frame"); return b.Width == 1100 && b.Height == 619; }, "resize rerenders sharply with preserved ratio");
                     Command(form, Keys.Control | Keys.D1); Pump(400);
+                    ClickPage(form, form.ClientSize.Width / 2 - 1, 100); ReadyPage(form, 1);
+                    ClickPage(form, form.ClientSize.Width / 2, 100); ReadyPage(form, 2);
                     Check(Math.Abs(form.Width / (double)form.Height - 16.0 / 9) < .005, "fit-window command matches page ratio");
                     Command(form, Keys.Control | Keys.T); Check(form.TopMost, "always-on-top toggle"); Command(form, Keys.Control | Keys.T);
                     Point old = Cursor.Position;

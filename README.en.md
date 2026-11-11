@@ -16,7 +16,7 @@ Other uses include online teaching, technical walkthroughs, research talks and a
 
 ## Quick start
 
-1. Download `PdfStage-1.0.1-Windows-x64.zip` from [Releases](https://github.com/xavier-xiao7/pdf-stage/releases/latest).
+1. Download `PdfStage-1.1.0-Windows-x64.zip` from [Releases](https://github.com/xavier-xiao7/pdf-stage/releases/latest).
 2. Extract the whole ZIP and run `PdfStage.exe`. Keep `pdfium.dll` beside it.
 3. Open or drop a PDF. Try the included `Demo.pdf` first.
 4. Drag the page to move the window. Drag an edge or corner to resize it.
@@ -28,8 +28,8 @@ Targets Windows 10/11 x64 with .NET Framework 4.8 or newer compatible runtime. T
 
 | Action | Input |
 | --- | --- |
-| Next page | Click, wheel down, Right, Down, Space, Page Down |
-| Previous page | Shift-click, wheel up, Left, Up, Page Up, Backspace |
+| Next page | Click the right half, wheel down, Right, Down, Space, Page Down |
+| Previous page | Click the left half, Shift-click, wheel up, Left, Up, Page Up, Backspace |
 | First / last page | Home / End |
 | Open / jump to page | Ctrl+O / Ctrl+G |
 | Fit window to page | Ctrl+1 |
@@ -38,6 +38,10 @@ Targets Windows 10/11 x64 with .NET Framework 4.8 or newer compatible runtime. T
 | Global previous / next page | Ctrl+Alt+Left / Right, after enabling |
 | Blackout / restore | B |
 | Menu / help / exit | Right-click or Esc / F1 / Alt+F4 |
+
+The center line belongs to the right half. Clicking beyond the first or last page does nothing and shows no message. Dragging moves the window without turning pages.
+
+PDF Stage has its own Windows taskbar button. Minimize to keep it running; click the button to restore. Exiting clears the running indicator (a manually pinned shortcut remains).
 
 Ordinary navigation keys require focus. Global shortcuts are disabled on each startup. Pages retain their aspect ratio; mismatched windows have black bars. Borders embedded in the original PDF are preserved.
 
@@ -59,7 +63,7 @@ Tests also require Node.js on PATH and an interactive Windows desktop:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test.ps1
 ```
 
-The tests temporarily open windows, move the pointer and send keyboard input. Do not operate the mouse or keyboard while they run. The verified 1.0.1 run contains 48 core checks and 18 menu checks, including 150 combined interaction cycles. See [validation details](docs/validation.md).
+The tests temporarily open windows, move the pointer and send keyboard input. Do not operate the mouse or keyboard while they run. Version 1.1.0 was tested against the Windows 11 taskbar: launch, minimize, click to restore, and exit. The suite passed 56 core checks and 18 menu checks, including 150 combined interaction cycles. See [validation details](docs/validation.md).
 
 ## Scope
 
