@@ -167,6 +167,8 @@ namespace PdfStage
                     resizeInput.Start(); mouse_event(2, 0, 0, 0, UIntPtr.Zero); Pump(500); resizeInput.Join();
                     Console.WriteLine("Resize input evidence: began=" + enteredResize + ", before=" + beforeResize + ", after=" + form.Size + ", foregroundIsApp=" + (GetForegroundWindow() == form.Handle) + ", cursor=" + Cursor.Position);
                     Check(form.Width > beforeResize.Width && form.Height > beforeResize.Height, "real mouse input resizes borderless native window");
+                    Check(Math.Abs(form.ClientSize.Width / (16.0/9.0) - form.ClientSize.Height) <= 0.5,
+                        "native resize keeps the page ratio during a corner drag");
                     Cursor.Position = savedCursor;
                     form.TopMost = false;
                     bool leftFree = RegisterHotKey(form.Handle, 501, 0x4003, (uint)Keys.Left);

@@ -29,6 +29,9 @@ const demo = [
   { w:960, h:540, content:bg + [text(64, 470, 13, 'PDF STAGE     /     READY FOR YOUR MEETING', '0.65 0.72 0.8'), text(60, 340, 48, 'Share this window.'), text(64, 257, 23, 'In Zoom, select the PDF Stage application window.'), text(64, 207, 23, 'Keep your notes beside it.'), text(64, 155, 18, 'Ctrl + O to open your own PDF.', '0.392 0.839 0.725'), text(64, 62, 14, 'PRESS HOME TO START AGAIN', '0.392 0.839 0.725'), text(848, 62, 14, '03 / 03', '0.65 0.72 0.8')].join('\n') }
 ];
 makePdf(path.join(base, 'demo.pdf'), demo);
+makePdf(path.join(base, 'page-fit.pdf'), [[960,540],[420,720],[600,600]].map(([w,h])=>({w,h,content:
+  `1 1 1 rg 0 0 ${w} ${h} re f\n1 0 0 rg 0 ${h-24} 24 24 re f\n0 0 1 rg ${w-24} 0 24 24 re f\n`+
+  text(40,h/2,20,'Page edges and corners', '0.1 0.2 0.3')})));
 makePdf(path.join(base, '中文 路径 test.pdf'), demo);
 makePdf(path.join(base, 'mixed.pdf'), [demo[0], {w:540, h:960, content:'1 1 1 rg 0 0 540 960 re f\n' + text(50,800,30,'Portrait page', '0 0 0')}, {w:600,h:600,content:'1 1 1 rg 0 0 600 600 re f\n' + text(50,400,30,'Square page','0 0 0')}]);
 makePdf(path.join(base, 'large.pdf'), Array.from({length:200}, (_,i)=>({w:960,h:540,content:bg+text(64,270,60,'Page '+(i+1))})));

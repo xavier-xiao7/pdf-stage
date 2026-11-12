@@ -21,4 +21,9 @@ Write-Host 'Interactive tests will open windows, move the pointer and send keybo
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed. See .cache/tests/core-results.txt.' }
 & $menuExe (Join-Path $repoRoot 'dist/PdfStage/PdfStage.exe') (Join-Path $repoRoot 'examples/Demo.pdf') 2>&1 | Tee-Object -FilePath (Join-Path $testDirectory 'menu-results.txt')
 if ($LASTEXITCODE -ne 0) { throw 'Menu regression failed. See .cache/tests/menu-results.txt.' }
-Write-Host 'All core and menu regression checks passed.'
+$fitExe = Join-Path $testDirectory 'PageFit.exe'
+& $compiler ($common + @("/out:$fitExe", (Join-Path $repoRoot 'tests/PageFit.cs')))
+if ($LASTEXITCODE -ne 0) { throw 'Page fit test compilation failed.' }
+& $fitExe (Join-Path $repoRoot 'dist/PdfStage/PdfStage.exe') (Join-Path $testDirectory 'page-fit.pdf') (Join-Path $testDirectory 'page-fit.png')
+if ($LASTEXITCODE -ne 0) { throw 'Page fit pixel regression failed.' }
+Write-Host 'All core, menu and page fit regression checks passed.'

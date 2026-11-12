@@ -23,6 +23,9 @@ namespace PdfStage
         int docId, openId, pageCount, page, renderedPage = -1, renderToken;
         bool loading, closing, dragging, black, globalKeys, wheelReady = true;
         double pageRatio = 16.0 / 9.0;
+        Size preferredViewport, fittedViewport;
+        bool fitting;
+        [StructLayout(LayoutKind.Sequential)] struct NativeRect { public int Left, Top, Right, Bottom; }
         Point mouseStart, windowStart;
         bool pressed;
         Rectangle openButton;
@@ -143,8 +146,10 @@ namespace PdfStage
             { if (result.Image != null) result.Image.Dispose(); return; }
             if (result.Error != null) { ShowError(result.Error); return; }
             Bitmap old = frame; frame = result.Image;
+            bool newGeometry = renderedPage < 0 || pageRatio != result.Ratio;
             renderedPage = result.Request.Page; pageRatio = result.Ratio;
             if (old != null) old.Dispose();
+            if (newGeometry) FitWindow();
             Text = String.Format("PDF Stage · {0} · {1}/{2}", Path.GetFileName(filePath), renderedPage + 1, pageCount);
             Invalidate();
         }
@@ -158,6 +163,11 @@ namespace PdfStage
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
+            if (!fitting && frame != null && WindowState == FormWindowState.Normal && ClientSize != fittedViewport)
+            {
+                preferredViewport = ClientSize;
+                FitWindow();
+            }
             if (resizeTimer != null) { resizeTimer.Stop(); resizeTimer.Start(); }
         }
         protected override void OnPaint(PaintEventArgs e)
@@ -166,13 +176,17 @@ namespace PdfStage
             Graphics g = e.Graphics;
             if (frame != null)
             {
-                g.Clear(Color.Black);
-                if (black) return;
-                double scale = Math.Min(ClientSize.Width / (double)frame.Width, ClientSize.Height / (double)frame.Height);
-                int w = (int)Math.Round(frame.Width * scale), h = (int)Math.Round(frame.Height * scale);
+                if (black) { g.Clear(Color.Black); return; }
+                Size target = PageGeometry.Fit(ClientSize, pageRatio);
+                Rectangle dest = new Rectangle((ClientSize.Width-target.Width)/2,(ClientSize.Height-target.Height)/2,target.Width,target.Height);
+                if (target == frame.Size) { g.DrawImageUnscaled(frame, dest.Location); return; }
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                g.DrawImage(frame, new Rectangle((ClientSize.Width - w) / 2, (ClientSize.Height - h) / 2, w, h));
+                using (var edges = new System.Drawing.Imaging.ImageAttributes())
+                {
+                    edges.SetWrapMode(WrapMode.TileFlipXY);
+                    g.DrawImage(frame, dest, 0, 0, frame.Width, frame.Height, GraphicsUnit.Pixel, edges);
+                }
                 return;
             }
             g.Clear(BackColor);
@@ -205,6 +219,22 @@ namespace PdfStage
         {
             // Retain native resize behavior while making the entire window client content.
             if (m.Msg == 0x83) { m.Result = IntPtr.Zero; return; } // WM_NCCALCSIZE
+            if (m.Msg == 0x214 && frame != null && WindowState == FormWindowState.Normal) // WM_SIZING
+            {
+                int edge = m.WParam.ToInt32();
+                NativeRect r = (NativeRect)Marshal.PtrToStructure(m.LParam,typeof(NativeRect));
+                int w = r.Right-r.Left, h = r.Bottom-r.Top;
+                bool horizontal = edge == 1 || edge == 2 || ((edge != 3 && edge != 6) &&
+                    Math.Abs(w-Width) >= Math.Abs(h-Height)*pageRatio);
+                Size cap = Screen.FromControl(this).WorkingArea.Size;
+                if (horizontal) cap.Width = Math.Min(cap.Width, Math.Max(MinimumSize.Width,w));
+                else cap.Height = Math.Min(cap.Height, Math.Max(MinimumSize.Height,h));
+                Size s = PageGeometry.Fit(cap, pageRatio);
+                if (edge == 1 || edge == 4 || edge == 7) r.Left = r.Right-s.Width; else r.Right = r.Left+s.Width;
+                if (edge == 3 || edge == 4 || edge == 5) r.Top = r.Bottom-s.Height; else r.Bottom = r.Top+s.Height;
+                Marshal.StructureToPtr(r,m.LParam,false);
+                m.Result = new IntPtr(1); return;
+            }
             if (m.Msg == 0x84 && WindowState == FormWindowState.Normal)
             {
                 long value = m.LParam.ToInt64();
@@ -297,21 +327,34 @@ namespace PdfStage
         }
         void FitWindow()
         {
-            if (frame == null) return;
+            if (frame == null || fitting || WindowState != FormWindowState.Normal) return;
             Rectangle area = Screen.FromControl(this).WorkingArea;
-            WindowState = FormWindowState.Normal;
-            int w = Width, h = (int)Math.Round(w / pageRatio);
-            if (h > area.Height) { h = area.Height; w = (int)Math.Round(h * pageRatio); }
-            if (w > area.Width) { w = area.Width; h = (int)Math.Round(w / pageRatio); }
-            Size = new Size(Math.Max(320, w), Math.Max(180, h));
-            Location = new Point(Math.Max(area.Left, Math.Min(Left, area.Right - Width)), Math.Max(area.Top, Math.Min(Top, area.Bottom - Height)));
+            if (preferredViewport.IsEmpty) preferredViewport = ClientSize;
+            // Hold onto the user's available space across mixed page sizes so rotating
+            // through portrait and landscape pages does not progressively shrink the window.
+            Size budget = new Size(Math.Min(area.Width,preferredViewport.Width),Math.Min(area.Height,preferredViewport.Height));
+            Size min = PageGeometry.Fit(new Size(Math.Min(area.Width,320),Math.Min(area.Height,180)), pageRatio);
+            Size s = PageGeometry.Fit(budget, pageRatio);
+            if (s.Width < min.Width || s.Height < min.Height) s = min;
+            Rectangle next = new Rectangle(Math.Max(area.Left, Math.Min(Left, area.Right-s.Width)),
+                Math.Max(area.Top, Math.Min(Top, area.Bottom-s.Height)), s.Width, s.Height);
+            fitting = true;
+            try
+            {
+                fittedViewport = s;
+                if (MinimumSize != min) MinimumSize = min;
+                if (Bounds != next) Bounds = next;
+            }
+            finally { fitting = false; }
         }
         void Place(bool right)
         {
             Rectangle area = Screen.FromControl(this).WorkingArea;
             WindowState = FormWindowState.Normal;
-            int w = area.Width / 2, h = Math.Max(180, Math.Min(area.Height, (int)Math.Round(w / pageRatio)));
-            Bounds = new Rectangle(right ? area.Right - w : area.Left, area.Top + (area.Height - h) / 2, w, h);
+            Size budget = new Size(area.Width/2, area.Height);
+            Size s = PageGeometry.Fit(budget,pageRatio);
+            Bounds = new Rectangle(right ? area.Right-s.Width : area.Left, area.Top+(area.Height-s.Height)/2,s.Width,s.Height);
+            preferredViewport = budget;
         }
         void ToggleHotkeys()
         {
@@ -378,7 +421,7 @@ namespace PdfStage
                 "1. 打开或拖入 PDF。\n2. 拖动页面移动窗口，拖动边缘调整大小。\n3. Zoom 共享屏幕时，选择「PDF Stage」窗口。\n\n" +
                 "点左半边：上一页；点右半边：下一页\n到首页或末页再向外翻：停在原页，不提示\n滚轮向下 / → / 空格：下一页；滚轮向上 / ←：上一页\nHome / End：第一页 / 最后一页\nCtrl + G：跳转页码\nCtrl + 1：窗口贴合页面比例\nCtrl + T：切换窗口置顶\nB：黑屏 / 恢复\n右键 / Esc：菜单；Alt + F4：退出\n\n" +
                 "看讲稿时也能翻页：先按 Ctrl + H 启用，再使用\nCtrl + Alt + ← / →，即使焦点在讲稿窗口也有效。\n\n" +
-                "页面始终保持比例、完整显示。比例不一致时保留黑边。\n菜单和对话框可能被共享；建议共享前完成文件选择。\n共享期间请勿最小化演示窗口。", "PDF Stage · 使用说明", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                "打开文件、翻页和拖动边缘时，窗口自动贴合页面比例。\n菜单和对话框可能被共享；建议共享前完成文件选择。\n共享期间请勿最小化演示窗口。", "PDF Stage · 使用说明", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         string TextPrompt(string title, string label, string initial, bool password)
         {

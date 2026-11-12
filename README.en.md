@@ -16,11 +16,11 @@ Other uses include online teaching, technical walkthroughs, research talks and a
 
 ## Quick start
 
-1. Download `PdfStage-1.1.0-Windows-x64.zip` from [Releases](https://github.com/xavier-xiao7/pdf-stage/releases/latest).
+1. Download `PdfStage-1.1.1-Windows-x64.zip` from [Releases](https://github.com/xavier-xiao7/pdf-stage/releases/latest).
 2. Extract the whole ZIP and run `PdfStage.exe`. Keep `pdfium.dll` beside it.
 3. Open or drop a PDF. Try the included `Demo.pdf` first.
 4. Drag the page to move the window. Drag an edge or corner to resize it.
-5. Press `Ctrl + 1` to fit the window to the page's aspect ratio.
+5. The window fits the page automatically. Drag an edge to change its size.
 
 Targets Windows 10/11 x64 with .NET Framework 4.8 or newer compatible runtime. Tested on Windows 11 x64. No installation, account or runtime internet connection is required. The release is unsigned.
 
@@ -43,7 +43,7 @@ The center line belongs to the right half. Clicking beyond the first or last pag
 
 PDF Stage has its own Windows taskbar button. Minimize to keep it running; click the button to restore. Exiting clears the running indicator (a manually pinned shortcut remains).
 
-Ordinary navigation keys require focus. Global shortcuts are disabled on each startup. Pages retain their aspect ratio; mismatched windows have black bars. Borders embedded in the original PDF are preserved.
+Ordinary navigation keys require focus. Global shortcuts are disabled on each startup. The window automatically fits each page on open, file drop and page turn, and resizes proportionally when an edge is dragged. Borders embedded in the original PDF are preserved.
 
 ## Build and test
 
@@ -63,7 +63,7 @@ Tests also require Node.js on PATH and an interactive Windows desktop:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test.ps1
 ```
 
-The tests temporarily open windows, move the pointer and send keyboard input. Do not operate the mouse or keyboard while they run. Version 1.1.0 was tested against the Windows 11 taskbar: launch, minimize, click to restore, and exit. The suite passed 56 core checks and 18 menu checks, including 150 combined interaction cycles. See [validation details](docs/validation.md).
+The tests temporarily open windows, move the pointer and send keyboard input. Do not operate the mouse or keyboard while they run. Version 1.1.0 was tested against the Windows 11 taskbar: launch, minimize, click to restore, and exit. The suite passed 57 core checks and 18 menu checks, including 150 combined interaction cycles. See [validation details](docs/validation.md).
 
 ## Scope
 

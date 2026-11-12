@@ -7,7 +7,7 @@ using System.Reflection;
 
 [assembly: AssemblyTitle("PDF Stage · 无边框演示")]
 [assembly: AssemblyProduct("PDF Stage")]
-[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.1.1.0")]
 
 namespace PdfStage
 {

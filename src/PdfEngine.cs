@@ -172,8 +172,8 @@ namespace PdfStage
                 double w = PdfNative.FPDF_GetPageWidthF(page), h = PdfNative.FPDF_GetPageHeightF(page);
                 if (w <= 0 || h <= 0 || Double.IsNaN(w) || Double.IsNaN(h)) throw new IOException("页面尺寸不正确。");
                 result.Ratio = w / h;
-                double scale = Math.Min(Math.Min(request.Width, 4096) / w, Math.Min(request.Height, 4096) / h);
-                int width = Math.Max(1, (int)Math.Round(w * scale)), height = Math.Max(1, (int)Math.Round(h * scale));
+                Size raster = PageGeometry.Fit(new Size(Math.Min(request.Width,4096), Math.Min(request.Height,4096)), result.Ratio);
+                int width = raster.Width, height = raster.Height;
                 bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
                 data = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
                 nativeBitmap = PdfNative.FPDFBitmap_CreateEx(width, height, 4, data.Scan0, data.Stride);
